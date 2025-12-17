@@ -1,0 +1,46 @@
+[
+  {
+    "id": "deadline_price",
+    "email_text": "Hi,\n\nWe reviewed your proposal. The price is higher than expected.\n\nWe need confirmation by Friday EOD whether you can come down to $95K, otherwise we’ll proceed with another vendor.\n\nBest,\nAlex",
+    "context": "High stakes, transactional relationship, short timeline",
+    "expected": {
+      "negotiation_type": "Distributive",
+      "negotiation_stage": "Bargaining",
+      "power_signals": ["deadlines", "alternatives"],
+      "emotional_tone": "Assertive"
+    }
+  },
+  {
+    "id": "collab_multiissue",
+    "email_text": "Hi Jamie,\n\nThanks for the thoughtful proposal. We’re aligned on most points, but I think we still have flexibility around scope and timelines.\n\nIf helpful, I’d love to explore options that work better for both sides long term.\n\nBest,\nMaria",
+    "context": "Medium stakes, long-term relationship important",
+    "expected": {
+      "negotiation_type": "Integrative",
+      "negotiation_stage": "Bargaining",
+      "power_signals": [],
+      "emotional_tone": "Neutral"
+    }
+  },
+  {
+    "id": "authority_pressure",
+    "email_text": "As mentioned earlier, leadership is reviewing all vendor relationships this quarter.\n\nWe need to see more flexibility on your end if this partnership is going to continue.\n\nPlease advise how you plan to address this.",
+    "context": "High stakes, relationship uncertain, internal escalation possible",
+    "expected": {
+      "negotiation_type": "Mixed",
+      "negotiation_stage": "Bargaining",
+      "power_signals": ["authority"],
+      "emotional_tone": "Defensive"
+    }
+  },
+  {
+    "id": "weak_ambiguous",
+    "email_text": "Hi,\n\nThanks for sending this over. Let me take a closer look and get back to you.\n\nRegards,\nSam",
+    "context": "Low stakes, early conversation, unclear goals",
+    "expected": {
+      "negotiation_type": "Mixed",
+      "negotiation_stage": "Opening",
+      "power_signals": [],
+      "emotional_tone": "Neutral"
+    }
+  }
+]
