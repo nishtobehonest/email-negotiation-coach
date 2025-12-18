@@ -78,6 +78,12 @@ MASTER_PROMPT = load_prompt()
 # LLM Interaction and Response Handling
 # -----------------------------
 
+api_key = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    st.error("Server configuration error: API key not found.")
+    st.stop()
+
 # Load environment variables from .env file
 load_dotenv()
 
