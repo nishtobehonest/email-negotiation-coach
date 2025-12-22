@@ -38,6 +38,30 @@ st.set_page_config(
     layout="centered"
 )
 
+
+st.sidebar.header("API Key")
+
+st.sidebar.caption(
+    "Your API key is stored only for this browser session and is never saved."
+)
+
+st.sidebar.text_input(
+    "OpenAI API key",
+    type="password",
+    key="user_api_key"
+)
+
+def clear_api_key() -> None:
+    st.session_state["user_api_key"] = ""
+
+st.sidebar.button("Clear key", on_click=clear_api_key)
+
+
+def get_active_api_key() -> str | None:
+    key = st.session_state.get("user_api_key", "").strip()
+    return key if key else None
+
+
 # App title and positioning message
 st.title("Email Negotiation Coach")
 st.caption("Reflection-first analysis. No replies are drafted.")
@@ -62,6 +86,11 @@ context_text = st.text_area(
 
 run_tests = st.checkbox("Run test suite instead of manual input")
 
+if not get_active_api_key():
+    st.warning("Add your OpenAI API key in the sidebar to run analysis.")
+    st.stop()
+
+
 # -----------------------------
 # LLM Prompt Loading
 # -----------------------------
@@ -69,22 +98,16 @@ run_tests = st.checkbox("Run test suite instead of manual input")
 # Keeps the prompt external so it can be edited
 # without touching application logic
 def load_prompt() -> str:
-    with open("prompt.txt", "r") as f:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_path = os.path.join(script_dir, "prompt.txt")
+    with open(prompt_path, "r") as f:
         return f.read()
-
-MASTER_PROMPT = load_prompt()
 
 # -----------------------------
 # LLM Interaction and Response Handling
 # -----------------------------
 
-api_key = os.getenv("OPENAI_API_KEY")
-
-if not api_key:
-    st.error("Server configuration error: API key not found.")
-    st.stop()
-
-# Load environment variables from .env file
+# Load environment variables from .env before reading API key
 load_dotenv()
 
 MASTER_PROMPT = load_prompt()
@@ -92,24 +115,30 @@ MASTER_PROMPT = load_prompt()
 # Initialize OpenAI client with error checking
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-    raise ValueError("OPENAI_API_KEY not found in .env file. Please add it.")
+    st.error("Server configuration error: API key not found.")
+    st.stop()
 
-client = OpenAI(api_key=api_key)
+from openai import OpenAI
+
+def get_client() -> OpenAI:
+    key = get_active_api_key()
+    if not key:
+        raise ValueError("No API key provided.")
+    return OpenAI(api_key=key)
+
+
 
 # This function calls OpenAI's GPT-4 model
 def call_llm(prompt: str) -> str:
     """
-    Sends the full prompt to OpenAI's GPT-4 and returns the response as JSON.
-    
-    Args:
-        prompt: The complete prompt including instructions and user input
-    
-    Returns:
-        A string containing valid JSON output from the LLM
+    Sends the full prompt to the LLM using the user's API key
+    and returns a JSON string.
     """
+    client = get_client()  # per-session client
+
     try:
         response = client.chat.completions.create(
-            model="gpt-4-turbo",  # Use gpt-4-turbo for better instruction following
+            model="gpt-4o-mini",  # cheaper + stable for chaining
             messages=[
                 {
                     "role": "system",
@@ -119,35 +148,32 @@ CRITICAL INSTRUCTIONS:
 - Do NOT draft or generate email replies
 - Do NOT suggest specific wording
 - Do NOT take sides
+- Do NOT recommend accepting or rejecting
 - Output ONLY valid JSON matching the exact schema provided
 - Include no text before or after the JSON
-
-Your output must be a JSON object with exactly these top-level keys:
-- "email_diagnosis" (object with negotiation_type, negotiation_stage, power_signals, emotional_tone)
-- "checklist_gaps" (array of gap objects)
-
-Nothing else."""
+"""
                 },
                 {
                     "role": "user",
                     "content": prompt
                 }
             ],
-            temperature=0.2,  # Very low for strict adherence to instructions
+            temperature=0.2,
             max_tokens=2000
         )
-        
-        # Extract the text response from the API
+
         result = response.choices[0].message.content
-        
-        if not result:
+
+        if not result or not result.strip():
             raise ValueError("Empty response from API")
-        
-        return result
-        
+
+        return result.strip()
+
     except Exception as e:
-        st.error(f"LLM API Error: {str(e)}")
+        st.error("LLM call failed.")
+        st.exception(e)
         raise
+
 
 # -----------------------------
 # Schema Validation Constants
@@ -174,10 +200,6 @@ REQUIRED_GAP_KEYS = {"item", "why_it_matters", "theory_reference"}
 # -----------------------------
 # Ensures the LLM output matches the expected structure
 def validate_schema(data: Dict[str, Any]) -> None:
-
-    # Debug: print actual keys
-    print(f"Actual keys in response: {data.keys()}")
-    print(f"Expected keys: {REQUIRED_TOP_KEYS}")
     
     # Check top-level structure
     if not REQUIRED_TOP_KEYS.issubset(data.keys()):
@@ -245,13 +267,9 @@ Optional Context:
     
     raw_response = raw_response.strip()
     
-    # Debug: print raw response for troubleshooting
-    print(f"Cleaned LLM Response: {raw_response[:300]}...")
-    
     # Parse JSON output with error handling
     try:
         parsed = json.loads(raw_response)
-        print(f"Parsed JSON keys: {parsed.keys()}")
     except json.JSONDecodeError as e:
         st.error(f"Failed to parse LLM response as JSON: {e}")
         st.error(f"Response was: {raw_response[:500]}")
@@ -375,21 +393,3 @@ Why it matters: {why}
 Theory reference: {theory}
 """)
         
-# -----------------------------
-# Schema Definitions
-# -----------------------------
-# Required keys for top-level JSON structure
-REQUIRED_TOP_KEYS = {"email_diagnosis", "checklist_gaps"}
-
-# Required fields inside diagnosis
-REQUIRED_DIAG_KEYS = {
-    "negotiation_type",
-    "negotiation_stage",
-    "power_signals",
-    "emotional_tone"
-}
-
-# Required fields for nested objects
-REQUIRED_POWER_KEYS = {"deadlines", "alternatives", "authority"}
-REQUIRED_TONE_KEYS = {"primary", "evidence"}
-REQUIRED_GAP_KEYS = {"item", "why_it_matters", "theory_reference"}
