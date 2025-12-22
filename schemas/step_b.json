@@ -1,0 +1,23 @@
+{
+  "email_diagnosis": {
+    "negotiation_type": "",
+    "negotiation_stage": "",
+    "power_signals": {
+      "deadlines": "",
+      "alternatives": "",
+      "authority": ""
+    },
+    "emotional_tone": {
+      "primary": "",
+      "evidence": ""
+    },
+    "uncertainty_flags": []
+  },
+  "checklist_gaps": [
+    {
+      "item": "",
+      "why_it_matters": "",
+      "theory_reference": ""
+    }
+  ]
+}

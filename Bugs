@@ -1,0 +1,5 @@
+	5.	Run one email
+	6.	Clear key
+	7.	Confirm it blocks again
+	- Does not block analyse email when api key is not present
+

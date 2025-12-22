@@ -1,0 +1,16 @@
+{
+  "facts": {
+    "explicit_asks": [],
+    "deadlines": [],
+    "numbers_and_terms": [],
+    "constraints": [],
+    "authority_cues": [],
+    "ambiguities": []
+  },
+  "evidence": [
+    {
+      "claim": "",
+      "quote": ""
+    }
+  ]
+}
